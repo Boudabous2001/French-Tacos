@@ -1,0 +1,27 @@
+{
+	email {$EMAIL_ACME}
+}
+
+# Le domaine nu sert le site ; www redirige vers lui.
+www.{$DOMAINE} {
+	redir https://{$DOMAINE}{uri} permanent
+}
+
+{$DOMAINE} {
+	encode zstd gzip
+
+	reverse_proxy site:3000 {
+		# Indispensable au flux temps réel de l'écran cuisine (SSE).
+		flush_interval -1
+	}
+
+	header {
+		-Server
+		-X-Powered-By
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

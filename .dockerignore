@@ -1,0 +1,12 @@
+.git
+.github
+.next
+.donnees
+.claude
+node_modules
+coverage
+docs
+*.md
+.env*
+!.env.example
+sauvegardes

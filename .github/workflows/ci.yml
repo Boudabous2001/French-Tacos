@@ -1,0 +1,37 @@
+name: Vérifications
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verifier:
+    name: Lint, types, tests et compilation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Types des routes
+        run: npx next typegen
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - name: Compilation de production
+        run: npm run build
+        env:
+          SITE_URL: https://example.com
+      - name: Audit des dépendances de production
+        run: npm audit --omit=dev --audit-level=high
