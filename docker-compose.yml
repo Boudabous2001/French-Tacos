@@ -1,0 +1,84 @@
+# Serveur de production : site + PostgreSQL + Caddy (HTTPS automatique) + sauvegardes.
+# Lancement : docker compose up -d --build   (voir docs/deploiement.md)
+
+services:
+  site:
+    build:
+      context: .
+      args:
+        SITE_URL: https://${DOMAINE:?DOMAINE manquant dans .env}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://frenchtacos:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant}@base:5432/frenchtacos
+      SITE_URL: https://${DOMAINE}
+    depends_on:
+      base:
+        condition: service_healthy
+    expose:
+      - "3000"
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 768m
+
+  base:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: frenchtacos
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: frenchtacos
+    volumes:
+      - base:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U frenchtacos -d frenchtacos"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    security_opt:
+      - no-new-privileges:true
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAINE: ${DOMAINE}
+      EMAIL_ACME: ${EMAIL_ACME:?EMAIL_ACME manquant}
+    volumes:
+      - ./deploiement/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - site
+
+  sauvegarde:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      PGHOST: base
+      PGUSER: frenchtacos
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: frenchtacos
+      RETENTION_JOURS: ${RETENTION_JOURS:-30}
+    volumes:
+      - ./sauvegardes:/sauvegardes
+      - ./deploiement/sauvegarde.sh:/sauvegarde.sh:ro
+    entrypoint: ["/bin/sh", "/sauvegarde.sh"]
+    depends_on:
+      base:
+        condition: service_healthy
+
+volumes:
+  base:
+  caddy_data:
+  caddy_config:
