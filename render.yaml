@@ -1,0 +1,32 @@
+# Serveur de DÉMONSTRATION gratuit sur Render (voir docs/serveur-de-test.md).
+# Le site réel du restaurant sera installé sur son propre serveur (docs/deploiement.md).
+services:
+  - type: web
+    name: french-tacos-demo
+    runtime: docker
+    plan: free
+    # Francfort : serveur en Europe, au plus près des clients et de la base Neon.
+    region: frankfurt
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/sante
+    # Redéploie à chaque fusion sur main, seulement si les vérifications GitHub passent.
+    autoDeployTrigger: checksPass
+    envVars:
+      # Bandeau « démonstration », site non indexé, paiement simulé sans Stripe.
+      - key: SITE_TEST
+        value: "1"
+      - key: PORT
+        value: "10000"
+      # Chaîne de connexion Neon (postgresql://…?sslmode=require), demandée à la création.
+      - key: DATABASE_URL
+        sync: false
+      # Adresse publique attribuée par Render, ex. https://french-tacos-demo.onrender.com
+      - key: SITE_URL
+        sync: false
+      # Compte gérant créé au premier démarrage (mot de passe de 12 caractères minimum).
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_MOT_DE_PASSE
+        sync: false

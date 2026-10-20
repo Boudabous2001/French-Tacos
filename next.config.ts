@@ -47,6 +47,8 @@ const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   serverExternalPackages: ["@electric-sql/pglite", "pg"],
+  // La base locale de développement ne doit jamais partir avec un build.
+  outputFileTracingExcludes: { "/**/*": ["./.donnees/**/*", "./sauvegardes/**/*"] },
   images: {
     formats: ["image/avif", "image/webp"],
   },

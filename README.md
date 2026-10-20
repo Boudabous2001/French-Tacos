@@ -55,6 +55,7 @@ npm run dev
   - [questionnaire-client.html](docs/questionnaire-client.html) : version à remplir dans le navigateur (réponses gardées sur l'appareil, impression en PDF)
   - [questionnaire-client.md](docs/questionnaire-client.md) : version texte ; `python scripts/generer-questionnaire.py` régénère la page
 - [Architecture et sécurité](docs/architecture.md)
+- [Serveur de démonstration gratuit (Render + Neon)](docs/serveur-de-test.md)
 - [Mise en ligne sur le serveur](docs/deploiement.md)
 
 ## État

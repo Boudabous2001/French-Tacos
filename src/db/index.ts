@@ -32,7 +32,10 @@ async function ouvrir(): Promise<Base> {
       import("drizzle-orm/node-postgres"),
       import("drizzle-orm/node-postgres/migrator"),
     ]);
-    const pool = new Pool({ connectionString: url, max: 10, idleTimeoutMillis: 30_000 });
+    const pool = new Pool({ connectionString: url, max: 10, idleTimeoutMillis: 30_000, connectionTimeoutMillis: 15_000 });
+    // Une connexion inactive coupée par le serveur (redémarrage, mise en veille de
+    // l'hébergeur) ne doit jamais faire tomber le site : le pool en rouvre une.
+    pool.on("error", (erreur) => console.error("[base] Connexion PostgreSQL perdue :", erreur.message));
     const db = drizzle(pool, { schema });
     await migrate(db, { migrationsFolder: DOSSIER_MIGRATIONS });
     return db;

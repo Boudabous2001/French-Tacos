@@ -18,8 +18,13 @@ COPY . .
 # Adresse publique du site : utilisée dans le sitemap et les balises de partage.
 ARG SITE_URL=https://example.com
 ENV SITE_URL=$SITE_URL
-RUN npm run build \
- && npx esbuild scripts/create-admin.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts-dist/create-admin.mjs
+RUN npm run build
+# Script de gestion des comptes : tout est intégré sauf les pilotes de base,
+# seuls modules présents dans l'image finale (node_modules du mode standalone).
+RUN npx esbuild scripts/create-admin.ts --bundle --platform=node --format=esm --target=node22 \
+      --external:pg --external:pg-native --external:@electric-sql/pglite \
+      --banner:js="import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);" \
+      --outfile=scripts-dist/create-admin.mjs
 
 # 3. Exécution
 FROM base AS execution
