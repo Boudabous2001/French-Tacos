@@ -50,7 +50,10 @@ npm run dev
 
 ## Documentation
 
-- [Questionnaire client](docs/questionnaire-client.md) : tout ce qu'il faut demander au restaurant
+- Questionnaire client : tout ce qu'il faut demander au restaurant
+  - [questionnaire-client.pdf](docs/questionnaire-client.pdf) : à envoyer au client
+  - [questionnaire-client.html](docs/questionnaire-client.html) : version à remplir dans le navigateur (réponses gardées sur l'appareil, impression en PDF)
+  - [questionnaire-client.md](docs/questionnaire-client.md) : version texte ; `python scripts/generer-questionnaire.py` régénère la page
 - [Architecture et sécurité](docs/architecture.md)
 - [Mise en ligne sur le serveur](docs/deploiement.md)
 
