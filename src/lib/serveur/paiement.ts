@@ -2,6 +2,8 @@ import "server-only";
 
 import Stripe from "stripe";
 
+import { estSiteDeTest } from "@/lib/environnement";
+
 let client: Stripe | null = null;
 
 /** Client Stripe, ou null tant que les clés ne sont pas configurées. */
@@ -18,14 +20,14 @@ export function stripe(): Stripe | null {
 
 /**
  * - stripe : vrai paiement (clés test ou live)
- * - demo : sans clés, en développement uniquement → bouton de paiement simulé
- * - indisponible : production sans clés → le paiement en ligne est masqué
+ * - demo : sans clés, en développement ou sur le serveur de démonstration → paiement simulé
+ * - indisponible : site réel sans clés → le paiement en ligne est masqué
  */
 export type ModePaiementEnLigne = "stripe" | "demo" | "indisponible";
 
 export function modePaiementEnLigne(): ModePaiementEnLigne {
   if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PUBLISHABLE_KEY) return "stripe";
-  if (process.env.NODE_ENV !== "production" || process.env.PAIEMENT_DEMO === "1") return "demo";
+  if (process.env.NODE_ENV !== "production" || estSiteDeTest()) return "demo";
   return "indisponible";
 }
 

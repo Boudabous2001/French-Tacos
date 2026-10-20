@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { FicheProduitGlobale } from "@/components/carte/FicheProduit";
 import { BarrePanier } from "@/components/panier/BarrePanier";
 import { TiroirPanier } from "@/components/panier/TiroirPanier";
+import { BandeauDemo } from "@/components/site/BandeauDemo";
 import { ChargeurBoutique } from "@/components/site/ChargeurBoutique";
 import { EnTete } from "@/components/site/EnTete";
 import { PiedDePage, PiedDePageSquelette } from "@/components/site/PiedDePage";
@@ -16,6 +17,9 @@ export default function LayoutSite({ children }: LayoutProps<"/">) {
       >
         Aller au contenu
       </a>
+      <Suspense fallback={null}>
+        <BandeauDemo />
+      </Suspense>
       <EnTete />
       <Suspense fallback={null}>
         <ChargeurBoutique />

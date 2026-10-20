@@ -1,18 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { estSiteDeTest } from "@/lib/environnement";
+
 /**
- * Filtre rapide du back-office : sans cookie de session, retour à la
- * connexion. La vraie vérification (session en base) est faite par chaque
- * page et chaque action côté serveur.
+ * Filtre exécuté avant chaque page :
+ * - back-office : sans cookie de session, retour à la connexion (la vraie
+ *   vérification, en base, est refaite par chaque page et chaque action) ;
+ * - serveur de démonstration : aucune page n'est indexée par les moteurs.
  */
 const COOKIES_SESSION = ["__Host-ft_admin", "ft_admin"];
 
 export function proxy(requete: NextRequest) {
   const { pathname } = requete.nextUrl;
-  if (pathname === "/admin/connexion") return NextResponse.next();
+  const backOffice = pathname === "/admin" || pathname.startsWith("/admin/");
 
-  const connecte = COOKIES_SESSION.some((nom) => requete.cookies.has(nom));
-  if (!connecte) {
+  if (backOffice && pathname !== "/admin/connexion" && !COOKIES_SESSION.some((nom) => requete.cookies.has(nom))) {
     const url = requete.nextUrl.clone();
     url.pathname = "/admin/connexion";
     url.search = "";
@@ -20,11 +22,16 @@ export function proxy(requete: NextRequest) {
   }
 
   const reponse = NextResponse.next();
-  reponse.headers.set("X-Robots-Tag", "noindex, nofollow");
-  reponse.headers.set("Cache-Control", "no-store");
+  if (backOffice) {
+    reponse.headers.set("Cache-Control", "no-store");
+  }
+  if (backOffice || estSiteDeTest()) {
+    reponse.headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
   return reponse;
 }
 
 export const config = {
-  matcher: ["/admin/:chemin*"],
+  // Toutes les pages, sauf les fichiers statiques.
+  matcher: ["/((?!_next/static|_next/image|images/|icones/|favicon.ico|icon.svg|apple-icon.png).*)"],
 };
