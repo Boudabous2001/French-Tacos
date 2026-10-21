@@ -12,6 +12,7 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 
+import { analyserAdresseBase } from "./adresse-base";
 import * as schema from "./schema";
 import { preparerBase } from "./initialiser";
 
@@ -24,25 +25,40 @@ declare global {
 const DOSSIER_MIGRATIONS = path.join(process.cwd(), "drizzle");
 
 async function ouvrir(): Promise<Base> {
-  const url = process.env.DATABASE_URL ?? "";
+  const adresse = analyserAdresseBase(process.env.DATABASE_URL);
 
-  if (url.startsWith("postgres://") || url.startsWith("postgresql://")) {
+  if (adresse.type === "invalide") {
+    throw new Error(`DATABASE_URL inutilisable : ${adresse.raison}.`);
+  }
+
+  if (adresse.type === "postgres") {
     const [{ Pool }, { drizzle }, { migrate }] = await Promise.all([
       import("pg"),
       import("drizzle-orm/node-postgres"),
       import("drizzle-orm/node-postgres/migrator"),
     ]);
-    const pool = new Pool({ connectionString: url, max: 10, idleTimeoutMillis: 30_000, connectionTimeoutMillis: 15_000 });
+    const pool = new Pool({ connectionString: adresse.url, max: 10, idleTimeoutMillis: 30_000, connectionTimeoutMillis: 15_000 });
     // Une connexion inactive coupée par le serveur (redémarrage, mise en veille de
     // l'hébergeur) ne doit jamais faire tomber le site : le pool en rouvre une.
     pool.on("error", (erreur) => console.error("[base] Connexion PostgreSQL perdue :", erreur.message));
     const db = drizzle(pool, { schema });
-    await migrate(db, { migrationsFolder: DOSSIER_MIGRATIONS });
+    try {
+      await migrate(db, { migrationsFolder: DOSSIER_MIGRATIONS });
+    } catch (erreur) {
+      await pool.end().catch(() => {});
+      // Drizzle enveloppe l'erreur de PostgreSQL (refus du mot de passe, serveur
+      // injoignable…) : c'est elle qu'on affiche. Elle ne contient jamais le mot de passe.
+      const cause = (erreur as Error & { cause?: Error }).cause ?? (erreur as Error);
+      const detail = [cause.message, (cause as Error & { code?: string }).code].filter(Boolean).join(" ");
+      throw new Error(`Connexion à PostgreSQL impossible (${detail || "raison inconnue"}). Vérifier DATABASE_URL : chaîne complète copiée depuis Neon → Connect.`);
+    }
     return db;
   }
 
   if (process.env.NODE_ENV === "production" && process.env.AUTORISER_PGLITE !== "1") {
-    throw new Error("DATABASE_URL (postgres://…) est obligatoire en production.");
+    throw new Error(
+      "DATABASE_URL est vide : renseigner la chaîne de connexion PostgreSQL (Neon → Connect) dans les variables d'environnement du serveur.",
+    );
   }
 
   const [{ PGlite }, { drizzle }, { migrate }] = await Promise.all([
@@ -67,6 +83,8 @@ export function base(): Promise<Base> {
     })
     .catch((erreur) => {
       globalThis.__frenchTacosBase = undefined;
+      // Toujours visible dans les journaux de l'hébergeur, même si l'appelant intercepte l'erreur.
+      console.error(`[base] ${(erreur as Error).message}`);
       throw erreur;
     });
   return globalThis.__frenchTacosBase;

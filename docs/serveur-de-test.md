@@ -44,3 +44,21 @@ Ensuite, chaque fusion sur `main` redéploie automatiquement, si les vérificati
 - **E-mails** : sans `SMTP_URL`, aucun e-mail n'est envoyé (ils sont seulement écrits dans les journaux Render).
 - **Stripe en test** : dès que le client a son compte, ajouter dans Render → Environment `STRIPE_SECRET_KEY` et `STRIPE_PUBLISHABLE_KEY` (clés **test**), plus le webhook `https://…onrender.com/api/stripe/webhook` et son `STRIPE_WEBHOOK_SECRET`. Carte de test : `4242 4242 4242 4242`.
 - **Ne jamais** mettre `SITE_TEST=1` sur le serveur réel du restaurant.
+
+## Dépannage
+
+**« Deploy failed » avec « Timed out waiting for internal health check »** : le site démarre mais n'arrive pas à joindre la base, donc `/api/sante` ne répond pas `ok`. Dans Render → **Logs**, chercher la ligne qui commence par `[base]` : elle donne la cause exacte.
+
+| Message `[base]` | Que faire |
+| ---------------- | --------- |
+| `DATABASE_URL est vide` | Render → Environment → renseigner `DATABASE_URL` |
+| `le mot de passe est masqué (****)` | Dans Neon → Connect, cliquer sur « Show password » ou sur le bouton Copier, puis recoller |
+| `la valeur ne contient pas d'adresse postgresql://…` | Recoller la chaîne complète, qui commence par `postgresql://` (un simple nom d'hôte ne suffit pas) |
+| `password authentication failed` | Mot de passe faux ou réinitialisé : recopier la chaîne depuis Neon |
+| `ENOTFOUND` / `ECONNREFUSED` / `timeout` | Hôte mal copié, ou projet Neon supprimé ou suspendu |
+
+Une commande `psql '…'`, des guillemets ou des espaces autour de la chaîne sont corrigés automatiquement.
+
+Après avoir corrigé la variable : **Save, rebuild, and deploy** (ou Manual Deploy → Deploy latest commit).
+
+**Ne jamais envoyer la chaîne de connexion complète par message ou dans un ticket** : elle contient le mot de passe de la base. En cas de doute, la réinitialiser dans Neon (Roles → Reset password) puis mettre à jour Render.
