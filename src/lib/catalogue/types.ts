@@ -52,6 +52,8 @@ export interface GroupeOptions {
   repetition?: boolean;
   /** Les prix des choix sont ignorés : ils sont compris dans le produit. */
   inclus?: boolean;
+  /** Prix imposé à chaque choix du groupe (ex. gratiné : +2,00 € sur un tacos simple, +3,00 € sur un maxi). */
+  prixParChoix?: number;
   /** Choix pré-sélectionnés à l'ouverture de la fiche (ex. formule « Seul »). */
   defaut?: string[];
 }

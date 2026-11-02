@@ -6,7 +6,7 @@
  * le navigateur n'est jamais cru.
  */
 import type { Centimes } from "@/lib/argent";
-import type { GroupeOptions, ListeChoix, Produit, Selection } from "./types";
+import type { ChoixItem, GroupeOptions, ListeChoix, Produit, Selection } from "./types";
 
 export const QUANTITE_MAX_LIGNE = 20;
 
@@ -144,7 +144,7 @@ export function evaluerSelection(
       if (quantite > 1 && !groupe.repetition) {
         erreurs.push({ groupe: groupe.id, message: `${item.nom} ne peut être pris qu'une fois.` });
       }
-      const prixItem = groupe.inclus ? 0 : item.prix;
+      const prixItem = prixDuChoix(groupe, item);
       prix += prixItem * quantite;
       choixResume.push({ id, nom: item.nom, quantite, prix: prixItem });
     }
@@ -160,6 +160,12 @@ export function evaluerSelection(
 }
 
 /** Choix proposés dans un groupe, dans l'ordre de la liste. */
+/** Prix réellement ajouté par un choix dans ce groupe. */
+export function prixDuChoix(groupe: GroupeOptions, item: ChoixItem): Centimes {
+  if (groupe.inclus) return 0;
+  return groupe.prixParChoix ?? item.prix;
+}
+
 export function choixDuGroupe(groupe: GroupeOptions, listes: Record<string, ListeChoix>) {
   const items = listes[groupe.listeId]?.items ?? [];
   return groupe.filtre ? items.filter((i) => groupe.filtre!.includes(i.id)) : items;

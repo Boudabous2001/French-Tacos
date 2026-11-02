@@ -17,6 +17,7 @@ import {
   empreinteSelection,
   evaluerSelection,
   groupeVisible,
+  prixDuChoix,
   selectionInitiale,
   texteResume,
 } from "@/lib/catalogue/prix";
@@ -413,7 +414,7 @@ function SectionGroupe({
                       "Épuisé"
                     ) : (
                       <>
-                        {!groupe.inclus && item.prix > 0 && <span className="text-braise-600">{supplement(item.prix)}</span>}
+                        {prixDuChoix(groupe, item) > 0 && <span className="text-braise-600">{supplement(prixDuChoix(groupe, item))}</span>}
                         {item.tags?.includes("vegetarien") && <Leaf className="size-3 text-emerald-600" aria-label="végétarien" />}
                         {item.tags?.includes("epice") && <Zap className="size-3 text-red-600" aria-label="épicé" />}
                       </>
